@@ -55,7 +55,7 @@ class MultiplicationSprint {
               </li>
               <li style="padding-left: var(--space-6); position: relative;">
                 <span style="position: absolute; left: 0; color: var(--color-primary);">4️⃣</span>
-                Get 100% correct to reach the leaderboard!
+                Complete the game to reach the leaderboard! <span style="color: var(--color-success);">Perfect score = bonus points!</span>
               </li>
             </ul>
           </div>
@@ -246,23 +246,27 @@ class MultiplicationSprint {
 
     const accuracy = MathUtils.calculatePercentage(correctCount, this.questions.length);
 
-    // Save score if perfect
+    // Calculate score with perfect score bonus
+    const isPerfect = accuracy === 100;
+    const baseScore = correctCount * 100;
+    const timeBonus = Math.max(0, (this.timeLimit - totalTime) * 10); // 10 points per second saved
+    const perfectBonus = isPerfect ? 1000 : 0; // 1000 point bonus for perfect score
+    const score = baseScore + timeBonus + perfectBonus;
+
+    // Save score for all completed runs
     const playerName = PlayerStorage.getCurrentPlayer();
-    let scoreSaved = false;
+    const scoreSaved = ScoreStorage.saveScore({
+      playerName,
+      game: 'multiplication-sprint',
+      difficulty: this.difficulty,
+      time: totalTime,
+      accuracy,
+      correctAnswers: correctCount,
+      totalQuestions: this.questions.length,
+      score: score
+    });
 
-    if (accuracy === 100) {
-      scoreSaved = ScoreStorage.saveScore({
-        playerName,
-        game: 'multiplication-sprint',
-        difficulty: this.difficulty,
-        time: totalTime,
-        accuracy,
-        correctAnswers: correctCount,
-        totalQuestions: this.questions.length
-      });
-    }
-
-    this.renderResults(correctCount, totalTime, accuracy, scoreSaved);
+    this.renderResults(correctCount, totalTime, accuracy, scoreSaved, score, isPerfect);
   }
 
   /**
@@ -325,14 +329,21 @@ class MultiplicationSprint {
 
     const accuracy = MathUtils.calculatePercentage(correctCount, this.questions.length);
 
+    // Calculate score but don't save on timeout
+    const isPerfect = accuracy === 100;
+    const baseScore = correctCount * 100;
+    const timeBonus = 0; // No time bonus on timeout
+    const perfectBonus = isPerfect ? 1000 : 0;
+    const score = baseScore + timeBonus + perfectBonus;
+
     // Don't save score on timeout
-    this.renderResults(correctCount, totalTime, accuracy, false);
+    this.renderResults(correctCount, totalTime, accuracy, false, score, isPerfect);
   }
 
   /**
    * Render results screen
    */
-  renderResults(correctCount, totalTime, accuracy, scoreSaved) {
+  renderResults(correctCount, totalTime, accuracy, scoreSaved, score, isPerfect) {
     const container = document.getElementById('game-container');
 
     container.innerHTML = `
@@ -343,7 +354,7 @@ class MultiplicationSprint {
           </div>
 
           <h1 style="font-size: var(--font-size-4xl); margin-bottom: var(--space-6);">
-            ${accuracy === 100 ? '🎉 Perfect Score!' : '📊 Results'}
+            ${isPerfect ? '🎉 Perfect Score!' : '📊 Results'}
           </h1>
 
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-8);">
@@ -367,18 +378,21 @@ class MultiplicationSprint {
               </div>
               <div style="color: var(--color-text-secondary); margin-top: var(--space-2);">Time</div>
             </div>
+
+            <div style="background: var(--color-bg-alt); padding: var(--space-6); border-radius: var(--radius-lg);">
+              <div style="font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); color: var(--color-success);">
+                ${score.toLocaleString()}
+              </div>
+              <div style="color: var(--color-text-secondary); margin-top: var(--space-2);">Score${isPerfect ? ' 🌟' : ''}</div>
+            </div>
           </div>
 
           ${scoreSaved ? `
-            <div style="background: var(--color-success-light); background: linear-gradient(135deg, var(--color-success-light) 0%, var(--color-success) 100%); color: white; padding: var(--space-6); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
+            <div style="background: ${isPerfect ? 'linear-gradient(135deg, var(--color-success-light) 0%, var(--color-success) 100%)' : 'var(--color-info)'}; color: white; padding: var(--space-6); border-radius: var(--radius-lg); margin-bottom: var(--space-6);">
               <div style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); margin-bottom: var(--space-2);">
-                🏆 Score Saved!
+                ${isPerfect ? '🏆 Perfect Score Bonus! +1000 Points!' : '✓ Score Saved!'}
               </div>
-              <div>Your perfect score has been added to the leaderboard!</div>
-            </div>
-          ` : accuracy < 100 ? `
-            <div style="background: var(--color-warning-light); padding: var(--space-4); border-radius: var(--radius-lg); margin-bottom: var(--space-6); color: var(--color-text);">
-              <strong>Almost there!</strong> Get 100% accuracy to reach the leaderboard.
+              <div>Your score has been added to the leaderboard!</div>
             </div>
           ` : ''}
 
