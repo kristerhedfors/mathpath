@@ -142,47 +142,96 @@ function generateSubtraction(difficulty = 'normal') {
 /**
  * Generate plausible wrong answers for multiple choice
  * @param {number} correctAnswer - The correct answer
- * @param {number} count - Number of wrong answers to generate (default 4)
+ * @param {number} count - Number of wrong answers to generate (default 5 for 6 total choices)
  * @param {Object} question - The question object for context
  * @returns {Array} Array of wrong answers (unique, not including correct)
  */
-function generateWrongAnswers(correctAnswer, count = 4, question = null) {
+function generateWrongAnswers(correctAnswer, count = 5, question = null) {
   const wrongAnswers = new Set();
 
-  // Strategy 1: Off-by-one or near misses
-  const variations = [
-    correctAnswer - 1,
-    correctAnswer + 1,
-    correctAnswer - 2,
-    correctAnswer + 2,
-    correctAnswer - 10,
-    correctAnswer + 10
-  ];
-
-  // Strategy 2: Common mistakes for multiplication
+  // Strategy for multiplication: 3 off-by-one factor errors + 2 random numbers
   if (question && question.type === 'multiplication') {
-    // Off-by-one-table mistakes
-    variations.push(
-      (question.num1 - 1) * question.num2,
-      (question.num1 + 1) * question.num2,
-      question.num1 * (question.num2 - 1),
-      question.num1 * (question.num2 + 1)
-    );
+    // Generate all 4 possible off-by-one factor errors
+    const offByOneErrors = [
+      (question.num1 - 1) * question.num2,  // First factor - 1
+      (question.num1 + 1) * question.num2,  // First factor + 1
+      question.num1 * (question.num2 - 1),  // Second factor - 1
+      question.num1 * (question.num2 + 1)   // Second factor + 1
+    ].filter(val => val > 0 && val !== correctAnswer);
+
+    // Remove duplicates (e.g., 12×12 has duplicates)
+    const uniqueErrors = [...new Set(offByOneErrors)];
+
+    // Separate errors into those below and above correct answer
+    const errorsBelow = uniqueErrors.filter(e => e < correctAnswer);
+    const errorsAbove = uniqueErrors.filter(e => e > correctAnswer);
+
+    // Choose strategy for positioning (determines which errors to select)
+    // 10% each: extreme low, extreme high, or 80% balanced
+    const strategy = Math.random();
+    let selectedErrors = [];
+    let numRandoms = 2;  // Default: 2 random numbers
+
+    if (strategy < 0.1 && errorsAbove.length >= 1) {
+      // EXTREME: Favor positions 0-1 (correct answer is smallest or second smallest)
+      // Use only 1-2 errors ABOVE, fill rest with randoms above
+      selectedErrors = errorsAbove.slice(0, Math.min(2, errorsAbove.length));
+      numRandoms = 5 - selectedErrors.length;  // Fill remaining slots with randoms
+    } else if (strategy < 0.2 && errorsBelow.length >= 1) {
+      // EXTREME: Favor positions 4-5 (correct answer is largest or second largest)
+      // Use only 1-2 errors BELOW, fill rest with randoms below
+      selectedErrors = errorsBelow.slice(0, Math.min(2, errorsBelow.length));
+      numRandoms = 5 - selectedErrors.length;  // Fill remaining slots with randoms
+    } else {
+      // Balanced selection for middle positions (80% of the time)
+      // Use 3 off-by-one errors (mix from both sides) + 2 randoms
+      const shuffled = shuffle(uniqueErrors);
+      selectedErrors = shuffled.slice(0, Math.min(3, shuffled.length));
+      numRandoms = 5 - selectedErrors.length;
+    }
+
+    // Add selected errors to wrong answers
+    selectedErrors.forEach(err => wrongAnswers.add(err));
+
+    // Determine range for random numbers
+    const allValues = [...selectedErrors, correctAnswer];
+    const min = Math.min(...allValues);
+    const max = Math.max(...allValues);
+    const spread = Math.max(10, Math.floor((max - min) * 0.5));
+
+    // Strategic placement of random numbers based on strategy
+    let extendedMin, extendedMax;
+
+    if (strategy < 0.1) {
+      // Extreme low position: ALL randoms ABOVE max
+      extendedMin = Math.max(correctAnswer + 1, max + 1);
+      extendedMax = Math.max(extendedMin + 5, max + spread);
+    } else if (strategy < 0.2) {
+      // Extreme high position: ALL randoms BELOW min
+      extendedMin = Math.max(1, min - spread);
+      extendedMax = Math.min(correctAnswer - 1, min - 1);
+      if (extendedMax < extendedMin) extendedMax = extendedMin; // Safety check
+    } else {
+      // Balanced strategy: randoms in extended range (both above and below)
+      extendedMin = Math.max(1, min - spread);
+      extendedMax = max + spread;
+    }
+
+    // Generate required number of random numbers in the chosen range
+    let attempts = 0;
+    while (wrongAnswers.size < count && attempts < 100) {
+      const random = randomInt(extendedMin, extendedMax);
+      if (random !== correctAnswer && random > 0 && !wrongAnswers.has(random)) {
+        wrongAnswers.add(random);
+      }
+      attempts++;
+    }
   }
 
-  // Strategy 3: Random variations in range
-  const range = Math.max(20, Math.floor(correctAnswer * 0.3));
-
-  // Add variations to set
-  variations.forEach(v => {
-    if (v > 0 && v !== correctAnswer) {
-      wrongAnswers.add(v);
-    }
-  });
-
-  // Fill remaining with random variations
+  // Fallback strategy for non-multiplication or if we need more wrong answers
   while (wrongAnswers.size < count) {
-    const offset = randomInt(-range, range);
+    const spread = Math.max(10, Math.floor(correctAnswer * 0.3));
+    const offset = randomInt(-spread, spread);
     const candidate = correctAnswer + offset;
 
     if (candidate > 0 && candidate !== correctAnswer) {
@@ -190,7 +239,7 @@ function generateWrongAnswers(correctAnswer, count = 4, question = null) {
     }
   }
 
-  // Convert to array and take required count
+  // Convert to array and return exactly count wrong answers
   return Array.from(wrongAnswers).slice(0, count);
 }
 
@@ -213,8 +262,8 @@ function generateQuestion(difficulty = 'normal', forceMultiplication = false) {
       : generateSubtraction(difficulty);
   }
 
-  // Generate wrong answers
-  const wrongAnswers = generateWrongAnswers(question.answer, 4, question);
+  // Generate wrong answers (5 wrong + 1 correct = 6 total choices)
+  const wrongAnswers = generateWrongAnswers(question.answer, 5, question);
 
   // Create answer choices
   const choices = shuffle([question.answer, ...wrongAnswers]);
