@@ -13,22 +13,43 @@ Standalone math learning web games for kids in school using pure client-side tec
 
 ## Project Structure
 ```
-/games/
-  /addition-race/      - Each game in its own folder
-    index.html         - Complete standalone game
-    style.css          - Game-specific styles
-    game.js            - Game logic
-    README.md          - Game instructions and learning goals
-  /multiplication-grid/
-  /fraction-builder/
-/shared/
-  /utils/              - Reusable JavaScript modules
-  /styles/             - Common CSS patterns
-  /assets/             - Shared images, sounds, fonts
-/docs/
-  game-template.html   - Starting template for new games
-  design-system.md     - Visual design guidelines
+/
+├── index.html           - Main game launcher/menu
+├── privacy.html         - Privacy information page
+├── README.md            - Project documentation
+├── CLAUDE.md            - Development guidelines (this file)
+├── CNAME                - Domain configuration
+│
+├── games/
+│   ├── math-blitz/           - One-at-a-time with streak counter
+│   ├── multiplication-sprint/ - Grid format, answer in any order
+│   ├── number-ninja/         - Gamified with combos and achievements
+│   └── memory-match/         - Memory game matching problems to answers
+│       ├── index.html        - Complete standalone game
+│       ├── game.js           - Game logic
+│       ├── style.css         - Game-specific styles
+│       └── README.md         - Game instructions and learning goals
+│
+└── shared/
+    ├── styles/
+    │   └── common.css        - Design system (CSS custom properties)
+    └── utils/
+        ├── storage.js        - PlayerStorage & ScoreStorage
+        ├── math.js           - MathUtils (question generation)
+        ├── scoreboard.js     - Scoreboard component class
+        ├── game-switcher.js  - GameSwitcher component
+        └── player-switcher.js - PlayerSwitcher component
 ```
+
+### Current Games
+
+**Math Blitz** - One question at a time with full-screen focus, streak counter, and speed bonuses for answers under 3 seconds.
+
+**Multiplication Sprint** - Grid format showing all 20 questions simultaneously. Answer in any order with strategic planning.
+
+**Number Ninja** - Highly gamified with RPG elements, combo system (1x → 1.5x → 2x → 3x multipliers), and achievement badges.
+
+**Memory Match** - Dual-grid memory game matching hidden problem cards to visible answer cards. Combines working memory with math fact practice.
 
 ## Code Standards
 
@@ -47,13 +68,15 @@ Standalone math learning web games for kids in school using pure client-side tec
 - Animations via CSS transitions and @keyframes
 
 ### JavaScript
-- Modern ES6+ (async/await, destructuring, optional chaining, nullish coalescing)
-- ES Modules with `<script type="module">`
-- Functional programming patterns where appropriate
-- Immutable data patterns for state management
+- Modern ES6+ features (async/await, template literals, destructuring, optional chaining, arrow functions)
+- **Global namespace pattern**: Classes and utilities attached to `window` object
+- **Regular script tags**: `<script src="..."></script>` (NOT `type="module"`)
+- **Script loading order**: Load dependencies before dependent code (storage → math → scoreboard → player-switcher → game)
+- Class-based architecture with constructor functions
+- Direct DOM manipulation using template literals and `innerHTML`
 - No external dependencies or frameworks
 - Proper error handling and edge cases
-- Performance-conscious (requestAnimationFrame for animations)
+- Performance-conscious (requestAnimationFrame for animations, debouncing user input)
 
 ### Browser Support
 Target modern evergreen browsers:
@@ -66,55 +89,275 @@ No polyfills, no legacy support.
 
 ## Architecture Patterns
 
-### Game Module Pattern
+### Game Class Pattern
+All games follow this standard class-based structure:
+
 ```javascript
 // game.js
-export class MathGame {
-  constructor(config) {
-    this.state = this.initializeState(config);
-    this.ui = new GameUI(this.container);
-    this.setupEventListeners();
+class MathBlitz {
+  constructor(difficulty) {
+    this.difficulty = difficulty;
+    this.questions = [];
+    this.currentQuestionIndex = 0;
+    this.score = 0;
+    this.startTime = null;
+    this.streak = 0;
+    // ... game-specific state properties
   }
 
-  initializeState(config) {
-    return {
-      score: 0,
-      level: config.startLevel || 1,
-      questions: [],
-      currentQuestion: null,
-      config
-    };
+  async initialize() {
+    // Generate questions using MathUtils
+    this.questions = MathUtils.generateQuestionSet(20, this.difficulty);
+    this.render();
   }
 
-  start() { /* ... */ }
-  checkAnswer(answer) { /* ... */ }
+  start() {
+    this.startTime = Date.now();
+    this.renderQuestion();
+  }
+
+  checkAnswer(answer) {
+    // Validate answer, update score, handle feedback
+    if (answer === this.questions[this.currentQuestionIndex].answer) {
+      this.score++;
+      this.streak++;
+    } else {
+      this.streak = 0;
+    }
+    this.nextQuestion();
+  }
+
   nextQuestion() { /* ... */ }
+  showResults() { /* ... */ }
+}
+```
+
+### Script Loading Pattern
+Load shared utilities in dependency order in HTML:
+
+```html
+<!-- Shared styles -->
+<link rel="stylesheet" href="../../shared/styles/common.css">
+<link rel="stylesheet" href="style.css">
+
+<!-- Shared utilities (in dependency order) -->
+<script src="../../shared/utils/storage.js"></script>
+<script src="../../shared/utils/math.js"></script>
+<script src="../../shared/utils/scoreboard.js"></script>
+<script src="../../shared/utils/player-switcher.js"></script>
+
+<!-- Game logic -->
+<script src="game.js"></script>
+```
+
+### Two-Phase Initialization Pattern
+All games use a consistent initialization flow:
+
+```javascript
+// Global game variable
+let game = null;
+
+// Phase 1: Player name prompt
+function init() {
+  const container = document.getElementById('game-container');
+  showPlayerNamePrompt(container);
+}
+
+// Phase 2: Difficulty selection
+function showDifficultySelection(playerName, container) {
+  container.innerHTML = `
+    <div class="difficulty-selection">
+      <button onclick="startGame('easy')">Easy</button>
+      <button onclick="startGame('medium')">Medium</button>
+      <button onclick="startGame('hard')">Hard</button>
+    </div>
+  `;
+}
+
+// Phase 3: Game start
+async function startGame(difficulty) {
+  game = new MathBlitz(difficulty);
+  await game.initialize();
+  game.start();
 }
 ```
 
 ### State Management
-- Immutable state updates
-- Single source of truth per game
-- State changes trigger UI updates
-- No direct DOM manipulation from game logic
+- Direct property mutation on game instance
+- State properties stored as class instance variables
+- DOM updated via `innerHTML` with template literals
+- Single game instance per session (stored in global `game` variable)
 
-### UI Separation
-- Game logic separate from UI rendering
-- UI components accept state, emit events
-- Declarative rendering patterns
-- Minimal DOM queries (cache selectors)
+### Shared Utilities Access
+Access shared utilities via global namespace:
+
+```javascript
+// Generate questions
+const questions = MathUtils.generateQuestionSet(20, 'medium');
+
+// Get current player
+const playerName = PlayerStorage.getCurrentPlayer();
+
+// Save score
+ScoreStorage.saveScore(playerName, score, gameName, difficulty);
+
+// Instantiate scoreboard
+const scoreboard = new Scoreboard(container, {
+  game: 'math-blitz',
+  difficulty: 'medium'
+});
+```
+
+## Shared Utilities API
+
+### MathUtils (`/shared/utils/math.js`)
+Question generation and math operations:
+
+```javascript
+// Generate a set of questions
+MathUtils.generateQuestionSet(count, difficulty)
+// Returns: Array of { question: "7 × 8", answer: 56, operation: 'multiplication' }
+
+// Generate wrong answers for multiple choice
+MathUtils.generateWrongAnswers(correctAnswer, count)
+// Returns: Array of plausible wrong answers
+
+// Difficulty configurations
+MathUtils.difficulties = {
+  easy: { min: 2, max: 5 },
+  medium: { min: 2, max: 10 },
+  hard: { min: 2, max: 12 }
+};
+```
+
+### PlayerStorage (`/shared/utils/storage.js`)
+Player management with localStorage:
+
+```javascript
+// Get current player name
+PlayerStorage.getCurrentPlayer()
+// Returns: string | null
+
+// Set current player
+PlayerStorage.setCurrentPlayer(name)
+
+// Get all players
+PlayerStorage.getAllPlayers()
+// Returns: Array of player names
+
+// Storage key: 'algebrain_dev_current_player'
+```
+
+### ScoreStorage (`/shared/utils/storage.js`)
+Leaderboard and score tracking:
+
+```javascript
+// Save a score (must be 100% accuracy to save)
+ScoreStorage.saveScore(playerName, score, game, difficulty, timeMs)
+
+// Get scores filtered by game and difficulty
+ScoreStorage.getScores({ game, difficulty })
+// Returns: Array of { playerName, score, game, difficulty, timestamp, timeMs }
+
+// Get a player's best score
+ScoreStorage.getPlayerBestScore(playerName, game, difficulty)
+
+// Storage key: 'algebrain_dev_all_scores'
+```
+
+### Scoreboard Component (`/shared/utils/scoreboard.js`)
+Reusable scoreboard UI with two tabs:
+
+```javascript
+// Instantiate scoreboard
+const scoreboard = new Scoreboard(containerElement, {
+  game: 'math-blitz',        // Game identifier
+  difficulty: 'medium'        // Difficulty level
+});
+
+// Scoreboard automatically:
+// - Shows "My Scores" tab with current player's history
+// - Shows "All Players" tab with global leaderboard
+// - Sorts by score (desc), then time (asc)
+// - Displays relative time (e.g., "2 minutes ago")
+```
+
+### PlayerSwitcher Component (`/shared/utils/player-switcher.js`)
+Player profile switcher UI:
+
+```javascript
+const playerSwitcher = new PlayerSwitcher(containerElement, onPlayerChange);
+
+// Callback receives new player name when switched
+function onPlayerChange(newPlayerName) {
+  // Reload game state, update UI, etc.
+}
+
+// Automatically shows:
+// - Current player name
+// - Dropdown to switch players
+// - Option to create new player
+```
+
+### GameSwitcher Component (`/shared/utils/game-switcher.js`)
+Navigation between games:
+
+```javascript
+const gameSwitcher = new GameSwitcher(containerElement);
+
+// Automatically renders buttons for all games:
+// - Math Blitz
+// - Multiplication Sprint
+// - Number Ninja
+// - Memory Match
+
+// Navigates to game's index.html when clicked
+```
+
+### Design System (`/shared/styles/common.css`)
+CSS custom properties for consistency:
+
+```css
+/* Colors */
+--color-primary: #3b82f6;
+--color-success: #10b981;
+--color-danger: #ef4444;
+--color-warning: #f59e0b;
+
+/* Spacing (4px base) */
+--space-1: 4px;
+--space-2: 8px;
+--space-3: 12px;
+--space-4: 16px;
+--space-6: 24px;
+--space-8: 32px;
+
+/* Typography */
+--font-size-sm: 14px;
+--font-size-base: 16px;
+--font-size-lg: 20px;
+--font-size-xl: 24px;
+--font-size-2xl: 32px;
+
+/* Effects */
+--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+--shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+--transition-fast: 150ms ease;
+```
 
 ## Development Workflow
 
 ### Creating a New Game
-1. Copy game template to `/games/new-game-name/`
-2. Define learning objectives and mechanics in README.md
-3. Implement game logic with tests
-4. Build UI layer
-5. Add responsive styles
-6. Optimize performance
-7. Accessibility audit
-8. Mobile device testing
+1. Create new folder in `/games/new-game-name/`
+2. Copy structure from an existing game (e.g., math-blitz) as starting point
+3. Define learning objectives and mechanics in README.md
+4. Update HTML to load shared utilities in correct order
+5. Implement game class with standard lifecycle methods (constructor, initialize, start, checkAnswer, showResults)
+6. Build UI using template literals and direct DOM manipulation
+7. Add game-specific styles in style.css
+8. Integrate PlayerStorage, ScoreStorage, and Scoreboard components
+9. Test on desktop and mobile devices
+10. Accessibility audit (keyboard navigation, screen reader, ARIA labels)
 
 ### Testing Checklist
 - [ ] Works on mobile (portrait and landscape)
@@ -245,62 +488,158 @@ docs: add learning objectives to README
 
 ## Common Patterns
 
-### Game Initialization
+### Game Initialization Flow
 ```javascript
-const config = {
-  difficulty: 'easy',
-  timeLimit: 60,
-  questionsPerRound: 10,
-  soundEnabled: true
-};
+// Global game variable
+let game = null;
 
-const game = new MathGame(config);
-await game.initialize();
-game.start();
-```
+// 1. Page load - show player prompt
+function init() {
+  const container = document.getElementById('game-container');
+  const currentPlayer = PlayerStorage.getCurrentPlayer();
 
-### State Updates
-```javascript
-updateState(changes) {
-  this.state = {
-    ...this.state,
-    ...changes,
-    updatedAt: Date.now()
-  };
-  this.render();
+  if (currentPlayer) {
+    showDifficultySelection(currentPlayer, container);
+  } else {
+    showPlayerNamePrompt(container);
+  }
 }
-```
 
-### Event Handling
-```javascript
-setupEventListeners() {
-  this.ui.on('answer-submitted', (answer) => {
-    this.checkAnswer(answer);
-  });
-
-  this.ui.on('restart', () => {
-    this.reset();
-  });
+// 2. Show difficulty selection
+function showDifficultySelection(playerName, container) {
+  container.innerHTML = `
+    <div class="welcome-screen">
+      <h2>Welcome, ${playerName}!</h2>
+      <p>Select difficulty:</p>
+      <button onclick="startGame('easy')">Easy (2-5)</button>
+      <button onclick="startGame('medium')">Medium (2-10)</button>
+      <button onclick="startGame('hard')">Hard (2-12)</button>
+    </div>
+  `;
 }
+
+// 3. Start game
+async function startGame(difficulty) {
+  const container = document.getElementById('game-container');
+  game = new MathBlitz(difficulty);
+  await game.initialize();
+  game.start();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', init);
 ```
 
-### Animation
+### Answer Validation Pattern
 ```javascript
-animate() {
-  const animate = (timestamp) => {
-    if (!this.state.animating) return;
+checkAnswer(userAnswer) {
+  const correct = this.questions[this.currentQuestionIndex];
 
-    const progress = (timestamp - this.state.startTime) / this.state.duration;
+  if (parseInt(userAnswer) === correct.answer) {
+    // Correct answer
+    this.score++;
+    this.streak++;
+    this.showFeedback('correct', '✓ Correct!');
 
-    if (progress < 1) {
-      this.updateAnimation(progress);
-      requestAnimationFrame(animate);
-    } else {
-      this.completeAnimation();
+    // Speed bonus check
+    const timeTaken = Date.now() - this.questionStartTime;
+    if (timeTaken < 3000) {
+      this.showSpeedBonus();
     }
-  };
+  } else {
+    // Wrong answer
+    this.streak = 0;
+    this.showFeedback('incorrect', `✗ Wrong! Answer is ${correct.answer}`);
+  }
 
-  requestAnimationFrame(animate);
+  // Move to next question after delay
+  setTimeout(() => this.nextQuestion(), 1500);
+}
+```
+
+### DOM Rendering Pattern
+```javascript
+renderQuestion() {
+  const q = this.questions[this.currentQuestionIndex];
+  const container = document.getElementById('game-container');
+
+  container.innerHTML = `
+    <div class="game-screen">
+      <div class="game-header">
+        <div class="progress">Question ${this.currentQuestionIndex + 1}/20</div>
+        <div class="score">Score: ${this.score}</div>
+        <div class="timer">${this.formatTime(this.timeRemaining)}</div>
+      </div>
+
+      <div class="question-display">
+        <h1>${q.question} = ?</h1>
+      </div>
+
+      <div class="answer-input">
+        <input type="number" id="answer-input" autofocus>
+        <button onclick="game.submitAnswer()">Submit</button>
+      </div>
+    </div>
+  `;
+
+  // Add event listeners after rendering
+  document.getElementById('answer-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') this.submitAnswer();
+  });
+
+  this.questionStartTime = Date.now();
+}
+```
+
+### Results Screen with Scoreboard
+```javascript
+showResults() {
+  const container = document.getElementById('game-container');
+  const timeTaken = Date.now() - this.startTime;
+  const isPerfect = this.score === 20;
+
+  // Save score if perfect
+  if (isPerfect) {
+    const playerName = PlayerStorage.getCurrentPlayer();
+    ScoreStorage.saveScore(playerName, this.score, 'math-blitz', this.difficulty, timeTaken);
+  }
+
+  container.innerHTML = `
+    <div class="results-screen">
+      <h2>${isPerfect ? '🎉 Perfect Score!' : 'Game Complete'}</h2>
+      <div class="final-score">
+        <p>Score: ${this.score}/20</p>
+        <p>Time: ${Math.floor(timeTaken / 1000)}s</p>
+      </div>
+      <div id="scoreboard-container"></div>
+      <button onclick="location.reload()">Play Again</button>
+    </div>
+  `;
+
+  // Render scoreboard
+  const scoreboardContainer = document.getElementById('scoreboard-container');
+  new Scoreboard(scoreboardContainer, {
+    game: 'math-blitz',
+    difficulty: this.difficulty
+  });
+}
+```
+
+### Timer Pattern
+```javascript
+startTimer() {
+  this.startTime = Date.now();
+  this.timerInterval = setInterval(() => {
+    const elapsed = Date.now() - this.startTime;
+    this.timeRemaining = Math.max(0, 120 - Math.floor(elapsed / 1000));
+
+    this.updateTimerDisplay();
+
+    if (this.timeRemaining === 0) {
+      clearInterval(this.timerInterval);
+      this.showResults();
+    }
+  }, 100);
 }
 ```
 
@@ -326,43 +665,176 @@ animate() {
 
 ## Quick Reference
 
-### Game Template Structure
-```javascript
-// game.js
-import { randomInt, shuffle } from '/shared/utils/math.js';
-import { GameUI } from '/shared/utils/ui.js';
+### Complete Minimal Game Template
 
-export class NewGame {
-  constructor(container, options = {}) {
-    this.container = container;
-    this.options = { ...defaultOptions, ...options };
-    this.state = this.initializeState();
+**index.html**
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Math Game - algebrain.dev</title>
+  <link rel="stylesheet" href="../../shared/styles/common.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="game-container"></div>
+
+  <!-- Load shared utilities in dependency order -->
+  <script src="../../shared/utils/storage.js"></script>
+  <script src="../../shared/utils/math.js"></script>
+  <script src="../../shared/utils/scoreboard.js"></script>
+  <script src="../../shared/utils/player-switcher.js"></script>
+
+  <!-- Load game logic -->
+  <script src="game.js"></script>
+</body>
+</html>
+```
+
+**game.js**
+```javascript
+class NewMathGame {
+  constructor(difficulty) {
+    this.difficulty = difficulty;
+    this.questions = [];
+    this.currentQuestionIndex = 0;
+    this.score = 0;
+    this.startTime = null;
   }
 
   async initialize() {
-    await this.loadAssets();
-    this.setupUI();
-    this.bindEvents();
+    // Generate questions using shared MathUtils
+    this.questions = MathUtils.generateQuestionSet(20, this.difficulty);
+    this.render();
   }
 
-  start() { /* game loop */ }
+  start() {
+    this.startTime = Date.now();
+    this.renderQuestion();
+  }
+
+  renderQuestion() {
+    const q = this.questions[this.currentQuestionIndex];
+    const container = document.getElementById('game-container');
+    container.innerHTML = `
+      <div class="question">${q.question} = ?</div>
+      <input type="number" id="answer" autofocus>
+      <button onclick="game.checkAnswer()">Submit</button>
+    `;
+  }
+
+  checkAnswer() {
+    const userAnswer = parseInt(document.getElementById('answer').value);
+    const correct = this.questions[this.currentQuestionIndex].answer;
+
+    if (userAnswer === correct) {
+      this.score++;
+    }
+
+    this.nextQuestion();
+  }
+
+  nextQuestion() {
+    this.currentQuestionIndex++;
+    if (this.currentQuestionIndex < this.questions.length) {
+      this.renderQuestion();
+    } else {
+      this.showResults();
+    }
+  }
+
+  showResults() {
+    const container = document.getElementById('game-container');
+    const timeTaken = Date.now() - this.startTime;
+
+    // Save perfect scores
+    if (this.score === 20) {
+      const playerName = PlayerStorage.getCurrentPlayer();
+      ScoreStorage.saveScore(playerName, this.score, 'new-game', this.difficulty, timeTaken);
+    }
+
+    container.innerHTML = `
+      <h2>Final Score: ${this.score}/20</h2>
+      <div id="scoreboard"></div>
+    `;
+
+    // Show scoreboard
+    new Scoreboard(document.getElementById('scoreboard'), {
+      game: 'new-game',
+      difficulty: this.difficulty
+    });
+  }
+
+  render() {
+    // Initial render logic
+  }
 }
 
-// index.html entry point
-import { NewGame } from './game.js';
-const game = new NewGame(document.getElementById('game-container'));
-await game.initialize();
+// Global game instance
+let game = null;
+
+// Initialization function
+function init() {
+  const container = document.getElementById('game-container');
+  const currentPlayer = PlayerStorage.getCurrentPlayer();
+
+  if (!currentPlayer) {
+    showPlayerNamePrompt(container);
+  } else {
+    showDifficultySelection(currentPlayer, container);
+  }
+}
+
+function showPlayerNamePrompt(container) {
+  container.innerHTML = `
+    <input type="text" id="player-name" placeholder="Enter your name">
+    <button onclick="setPlayerName()">Start</button>
+  `;
+}
+
+function setPlayerName() {
+  const name = document.getElementById('player-name').value;
+  if (name) {
+    PlayerStorage.setCurrentPlayer(name);
+    showDifficultySelection(name, document.getElementById('game-container'));
+  }
+}
+
+function showDifficultySelection(playerName, container) {
+  container.innerHTML = `
+    <h2>Welcome, ${playerName}!</h2>
+    <button onclick="startGame('easy')">Easy</button>
+    <button onclick="startGame('medium')">Medium</button>
+    <button onclick="startGame('hard')">Hard</button>
+  `;
+}
+
+async function startGame(difficulty) {
+  game = new NewMathGame(difficulty);
+  await game.initialize();
+  game.start();
+}
+
+// Start on page load
+document.addEventListener('DOMContentLoaded', init);
 ```
 
-### Performance Monitoring
+### Storage Keys Reference
 ```javascript
-if (import.meta.env.DEV) {
-  performance.mark('game-start');
-  // ... game code
-  performance.mark('game-ready');
-  performance.measure('initialization', 'game-start', 'game-ready');
-  console.log(performance.getEntriesByType('measure'));
-}
+// All localStorage keys use 'algebrain_dev_' prefix
+'algebrain_dev_current_player'  // Current player name
+'algebrain_dev_all_scores'      // Array of all scores
+```
+
+### Common Difficulty Configurations
+```javascript
+const difficulties = {
+  easy: { min: 2, max: 5 },      // 2×3, 4×5, etc.
+  medium: { min: 2, max: 10 },   // 2×7, 9×8, etc.
+  hard: { min: 2, max: 12 }      // 7×11, 12×9, etc.
+};
 ```
 
 ## Resources
