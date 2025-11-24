@@ -128,7 +128,17 @@ class MultiplicationSprint {
       <div class="game-container">
         <div class="game-header">
           <h1 class="game-title">🏃 Sprint</h1>
-          <div class="timer" id="timer">${MathUtils.formatTime(this.timeRemaining)}</div>
+          <div style="display: flex; align-items: center; gap: var(--space-3);">
+            <div class="timer" id="timer">${MathUtils.formatTime(this.timeRemaining)}</div>
+            <button
+              class="btn-outline btn-sm"
+              onclick="game.restart()"
+              style="white-space: nowrap;"
+              aria-label="Restart game"
+            >
+              🔄 Restart
+            </button>
+          </div>
         </div>
 
         <div style="margin-bottom: var(--space-6);">
@@ -396,6 +406,26 @@ class MultiplicationSprint {
     }
 
     this.initialize();
+  }
+
+  /**
+   * Restart current game
+   */
+  restart() {
+    // Clear the timer
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
+
+    // Reset state
+    this.answers = new Map();
+    this.startTime = null;
+    this.endTime = null;
+    this.timeRemaining = this.timeLimit;
+    this.gameEnded = false;
+
+    // Show welcome screen again
+    this.renderWelcome();
   }
 }
 
