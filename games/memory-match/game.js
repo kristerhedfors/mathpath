@@ -19,7 +19,7 @@ class MemoryMatch {
   }
 
   async initialize() {
-    const questionSet = MathUtils.generateQuestionSet(12, this.difficulty);
+    const questionSet = MathUtils.generateQuestionSet(9, this.difficulty);
     this.questions = questionSet.map((q, index) => ({
       id: `q-${index}`,
       problem: q.text,
@@ -65,7 +65,7 @@ class MemoryMatch {
                 <li><strong>Left Grid:</strong> Click cards to flip and reveal math problems</li>
                 <li><strong>Right Grid:</strong> Click the answer that matches your flipped problem</li>
                 <li><strong>Match:</strong> Correct matches stay revealed and highlighted</li>
-                <li><strong>Goal:</strong> Match all 12 pairs in the fewest attempts possible</li>
+                <li><strong>Goal:</strong> Match all 9 pairs in the fewest attempts possible</li>
                 <li><strong>Time Limit:</strong> 3 minutes to complete the challenge</li>
               </ul>
             </div>
@@ -135,7 +135,7 @@ class MemoryMatch {
             </div>
             <div class="stat-item">
               <span class="stat-label">Matched</span>
-              <span class="stat-value" id="matched">${this.correctMatches}/12</span>
+              <span class="stat-value" id="matched">${this.correctMatches}/9</span>
             </div>
           </div>
         </div>
@@ -301,7 +301,7 @@ class MemoryMatch {
     this.selectedProblem = null;
 
     // Check if won
-    if (this.correctMatches === 12) {
+    if (this.correctMatches === 9) {
       setTimeout(() => {
         this.endGame('complete');
       }, 500);
@@ -359,7 +359,7 @@ class MemoryMatch {
     }
 
     const timeUsed = Math.floor((this.endTime - this.startTime) / 1000);
-    const isPerfect = reason === 'complete' && this.attempts === 12;
+    const isPerfect = reason === 'complete' && this.attempts === 9;
 
     // Save score if completed
     if (reason === 'complete') {
@@ -387,7 +387,7 @@ class MemoryMatch {
     let resultHTML = '';
 
     if (isComplete) {
-      const efficiency = ((12 / this.attempts) * 100).toFixed(1);
+      const efficiency = ((9 / this.attempts) * 100).toFixed(1);
 
       resultHTML = `
         <div class="results-card success">
@@ -424,11 +424,11 @@ class MemoryMatch {
         <div class="results-card timeout">
           <div class="result-icon">⏱️</div>
           <h2>Time's Up!</h2>
-          <p class="result-message">You matched ${this.correctMatches} out of 12 pairs.</p>
+          <p class="result-message">You matched ${this.correctMatches} out of 9 pairs.</p>
 
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-value">${this.correctMatches}/12</div>
+              <div class="stat-value">${this.correctMatches}/9</div>
               <div class="stat-label">Pairs Matched</div>
             </div>
             <div class="stat-card">

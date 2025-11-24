@@ -30,10 +30,10 @@
 .card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
   gap: var(--space-3);
   height: 100%;
-  min-height: min(40vh, 350px);
+  min-height: min(32vh, 280px);
 }
 
 .card {
@@ -517,7 +517,7 @@
   }
 
   .card-grid {
-    min-height: min(35vh, 300px);
+    min-height: min(28vh, 240px);
   }
 
   .card-front,
@@ -538,7 +538,7 @@
   }
 
   .card-grid {
-    min-height: 300px;
+    min-height: 240px;
     gap: var(--space-2);
   }
 
@@ -628,7 +628,7 @@
 
 @media (max-width: 480px) {
   .card-grid {
-    min-height: 250px;
+    min-height: 200px;
     gap: var(--space-1);
   }
 
