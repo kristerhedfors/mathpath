@@ -9,9 +9,9 @@ class GameSwitcher {
    */
   static GAMES = [
     {
-      name: 'Multiplication Sprint',
-      path: '/games/multiplication-sprint/index.html',
-      icon: '🏃'
+      name: 'Memory Match',
+      path: '/games/memory-match/index.html',
+      icon: '🧠'
     },
     {
       name: 'Math Blitz',

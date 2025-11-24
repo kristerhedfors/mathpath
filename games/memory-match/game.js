@@ -1,0 +1,455 @@
+class MemoryMatch {
+  constructor(difficulty) {
+    this.difficulty = difficulty;
+    this.questions = [];
+    this.answers = [];
+    this.flippedCards = new Set();
+    this.matchedPairs = new Set();
+    this.selectedProblem = null;
+    this.attempts = 0;
+    this.correctMatches = 0;
+    this.startTime = null;
+    this.endTime = null;
+    this.timerInterval = null;
+    this.timeLimit = 180; // 3 minutes
+    this.timeRemaining = this.timeLimit;
+    this.gameEnded = false;
+  }
+
+  async initialize() {
+    const questionSet = MathUtils.generateQuestionSet(12, this.difficulty);
+    this.questions = questionSet.map((q, index) => ({
+      id: `q-${index}`,
+      problem: q.question,
+      answer: q.answer,
+      choices: q.choices
+    }));
+
+    // Create shuffled answers array for right grid
+    this.answers = [...this.questions]
+      .sort(() => Math.random() - 0.5)
+      .map((q, index) => ({
+        id: `a-${index}`,
+        questionId: q.id,
+        answer: q.answer
+      }));
+
+    this.renderWelcome();
+  }
+
+  renderWelcome() {
+    const player = PlayerStorage.getCurrentPlayer();
+    const difficultyText = this.difficulty === 'easy' ? 'Easy' :
+                          this.difficulty === 'medium' ? 'Medium' : 'Hard';
+
+    document.getElementById('game-container').innerHTML = `
+      <div class="welcome-screen">
+        <div class="welcome-content">
+          <div class="game-header">
+            <h1 class="game-title">🧠 Memory Match</h1>
+            <div id="player-switcher-container"></div>
+          </div>
+
+          <div class="welcome-card">
+            <h2>Welcome, ${player}!</h2>
+            <p class="difficulty-badge">Difficulty: ${difficultyText}</p>
+
+            <div class="instructions">
+              <h3>How to Play:</h3>
+              <ul>
+                <li><strong>Left Grid:</strong> Click cards to flip and reveal math problems</li>
+                <li><strong>Right Grid:</strong> Click the answer that matches your flipped problem</li>
+                <li><strong>Match:</strong> Correct matches stay revealed and highlighted</li>
+                <li><strong>Goal:</strong> Match all 12 pairs in the fewest attempts possible</li>
+                <li><strong>Time Limit:</strong> 3 minutes to complete the challenge</li>
+              </ul>
+            </div>
+
+            <button class="btn btn-primary btn-lg" id="start-btn">
+              Start Game 🧠
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    createPlayerSwitcher('#player-switcher-container', () => {
+      window.location.reload();
+    });
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+      this.start();
+    });
+  }
+
+  start() {
+    this.startTime = Date.now();
+    this.startTimer();
+    this.render();
+  }
+
+  startTimer() {
+    this.timerInterval = setInterval(() => {
+      this.timeRemaining--;
+
+      const timerElement = document.getElementById('timer');
+      if (timerElement) {
+        timerElement.textContent = MathUtils.formatTime(this.timeRemaining);
+
+        if (this.timeRemaining <= 10) {
+          timerElement.classList.add('warning');
+        }
+      }
+
+      if (this.timeRemaining <= 0) {
+        this.endGame('timeout');
+      }
+    }, 1000);
+  }
+
+  render() {
+    const player = PlayerStorage.getCurrentPlayer();
+
+    document.getElementById('game-container').innerHTML = `
+      <div class="game-screen">
+        <div class="game-header">
+          <div class="header-left">
+            <h1 class="game-title">🧠 Memory Match</h1>
+            <div id="player-switcher-container"></div>
+          </div>
+          <div class="header-right">
+            <div class="stat-item">
+              <span class="stat-label">Time</span>
+              <span class="stat-value" id="timer">${MathUtils.formatTime(this.timeRemaining)}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Attempts</span>
+              <span class="stat-value" id="attempts">${this.attempts}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Matched</span>
+              <span class="stat-value" id="matched">${this.correctMatches}/12</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="memory-container">
+          <div class="grid-section">
+            <h3 class="grid-title">Problems (Click to Flip)</h3>
+            <div class="card-grid" id="problems-grid">
+              ${this.renderProblemsGrid()}
+            </div>
+          </div>
+
+          <div class="grid-section">
+            <h3 class="grid-title">Answers (Click to Match)</h3>
+            <div class="card-grid" id="answers-grid">
+              ${this.renderAnswersGrid()}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    createPlayerSwitcher('#player-switcher-container', () => {
+      window.location.reload();
+    });
+
+    this.attachEventListeners();
+  }
+
+  renderProblemsGrid() {
+    return this.questions.map(q => {
+      const isFlipped = this.flippedCards.has(q.id);
+      const isMatched = this.matchedPairs.has(q.id);
+      const isSelected = this.selectedProblem?.id === q.id;
+
+      const classes = [
+        'card',
+        'problem-card',
+        isFlipped || isMatched ? 'flipped' : '',
+        isMatched ? 'matched' : '',
+        isSelected ? 'selected' : ''
+      ].filter(Boolean).join(' ');
+
+      return `
+        <div class="${classes}" data-id="${q.id}" data-type="problem">
+          <div class="card-inner">
+            <div class="card-back">?</div>
+            <div class="card-front">${q.problem}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  renderAnswersGrid() {
+    return this.answers.map(a => {
+      const isMatched = this.matchedPairs.has(a.questionId);
+      const isDisabled = !this.selectedProblem || isMatched;
+
+      const classes = [
+        'card',
+        'answer-card',
+        'flipped',
+        isMatched ? 'matched' : '',
+        isDisabled ? 'disabled' : ''
+      ].filter(Boolean).join(' ');
+
+      return `
+        <div class="${classes}" data-id="${a.id}" data-question-id="${a.questionId}" data-type="answer">
+          <div class="card-inner">
+            <div class="card-front">${a.answer}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  attachEventListeners() {
+    document.querySelectorAll('.problem-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const questionId = card.dataset.id;
+        this.handleProblemClick(questionId);
+      });
+    });
+
+    document.querySelectorAll('.answer-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const answerId = card.dataset.id;
+        const questionId = card.dataset.questionId;
+        this.handleAnswerClick(questionId, answerId);
+      });
+    });
+  }
+
+  handleProblemClick(questionId) {
+    if (this.gameEnded) return;
+    if (this.matchedPairs.has(questionId)) return;
+
+    // Toggle selection
+    if (this.selectedProblem?.id === questionId) {
+      this.selectedProblem = null;
+      this.flippedCards.delete(questionId);
+    } else {
+      // Deselect previous
+      if (this.selectedProblem) {
+        this.flippedCards.delete(this.selectedProblem.id);
+      }
+
+      // Select new
+      this.selectedProblem = this.questions.find(q => q.id === questionId);
+      this.flippedCards.add(questionId);
+    }
+
+    this.render();
+  }
+
+  handleAnswerClick(questionId, answerId) {
+    if (this.gameEnded) return;
+    if (!this.selectedProblem) return;
+    if (this.matchedPairs.has(questionId)) return;
+
+    this.attempts++;
+
+    // Check if match
+    if (this.selectedProblem.id === questionId) {
+      // Correct match!
+      this.handleCorrectMatch(questionId);
+    } else {
+      // Incorrect match
+      this.handleIncorrectMatch();
+    }
+  }
+
+  handleCorrectMatch(questionId) {
+    this.matchedPairs.add(questionId);
+    this.correctMatches++;
+    this.selectedProblem = null;
+
+    // Check if won
+    if (this.correctMatches === 12) {
+      setTimeout(() => {
+        this.endGame('complete');
+      }, 500);
+    } else {
+      this.render();
+    }
+  }
+
+  handleIncorrectMatch() {
+    const wrongAnimation = document.createElement('div');
+    wrongAnimation.className = 'feedback-animation wrong';
+    wrongAnimation.textContent = '✗ Try Again';
+    document.body.appendChild(wrongAnimation);
+
+    setTimeout(() => {
+      wrongAnimation.remove();
+    }, 1000);
+
+    // Flip card back after delay
+    const problemId = this.selectedProblem.id;
+    this.selectedProblem = null;
+
+    setTimeout(() => {
+      this.flippedCards.delete(problemId);
+      this.render();
+    }, 800);
+
+    // Update attempts immediately
+    const attemptsElement = document.getElementById('attempts');
+    if (attemptsElement) {
+      attemptsElement.textContent = this.attempts;
+    }
+  }
+
+  endGame(reason) {
+    if (this.gameEnded) return;
+
+    this.gameEnded = true;
+    this.endTime = Date.now();
+
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
+
+    const timeUsed = Math.floor((this.endTime - this.startTime) / 1000);
+    const isPerfect = reason === 'complete' && this.attempts === 12;
+
+    // Save score if completed
+    if (reason === 'complete') {
+      const score = {
+        player: PlayerStorage.getCurrentPlayer(),
+        game: 'memory-match',
+        difficulty: this.difficulty,
+        attempts: this.attempts,
+        timeUsed: timeUsed,
+        completed: true,
+        timestamp: Date.now()
+      };
+
+      ScoreStorage.saveScore(score);
+    }
+
+    this.renderResults(reason, timeUsed, isPerfect);
+  }
+
+  renderResults(reason, timeUsed, isPerfect) {
+    const player = PlayerStorage.getCurrentPlayer();
+    const isTimeout = reason === 'timeout';
+    const isComplete = reason === 'complete';
+
+    let resultHTML = '';
+
+    if (isComplete) {
+      const efficiency = ((12 / this.attempts) * 100).toFixed(1);
+
+      resultHTML = `
+        <div class="results-card success">
+          <div class="result-icon">🎉</div>
+          <h2>Congratulations!</h2>
+          <p class="result-message">All pairs matched!</p>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">${this.attempts}</div>
+              <div class="stat-label">Total Attempts</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${MathUtils.formatTime(timeUsed)}</div>
+              <div class="stat-label">Time Used</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${efficiency}%</div>
+              <div class="stat-label">Efficiency</div>
+            </div>
+          </div>
+
+          ${isPerfect ? `
+            <div class="perfect-score-banner">
+              <span class="banner-icon">✨</span>
+              <span class="banner-text">PERFECT SCORE!</span>
+              <span class="banner-icon">✨</span>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    } else {
+      resultHTML = `
+        <div class="results-card timeout">
+          <div class="result-icon">⏱️</div>
+          <h2>Time's Up!</h2>
+          <p class="result-message">You matched ${this.correctMatches} out of 12 pairs.</p>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">${this.correctMatches}/12</div>
+              <div class="stat-label">Pairs Matched</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">${this.attempts}</div>
+              <div class="stat-label">Attempts Made</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    document.getElementById('game-container').innerHTML = `
+      <div class="results-screen">
+        <div class="results-content">
+          <div class="game-header">
+            <h1 class="game-title">🧠 Memory Match</h1>
+            <div id="player-switcher-container"></div>
+          </div>
+
+          ${resultHTML}
+
+          <div class="scoreboard-container">
+            <h3>Leaderboard</h3>
+            <div id="scoreboard"></div>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" id="play-again-btn">
+              Play Again
+            </button>
+            <button class="btn btn-secondary" id="change-difficulty-btn">
+              Change Difficulty
+            </button>
+            <a href="../../index.html" class="btn btn-secondary">
+              Back to Menu
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+
+    createPlayerSwitcher('#player-switcher-container', () => {
+      window.location.reload();
+    });
+
+    // Render scoreboard
+    new Scoreboard(document.getElementById('scoreboard'), {
+      game: 'memory-match',
+      difficulty: this.difficulty,
+      limit: 10,
+      sortBy: 'attempts',
+      sortOrder: 'asc',
+      columns: ['player', 'attempts', 'timeUsed'],
+      formatters: {
+        timeUsed: (value) => MathUtils.formatTime(value)
+      }
+    });
+
+    document.getElementById('play-again-btn').addEventListener('click', () => {
+      window.location.reload();
+    });
+
+    document.getElementById('change-difficulty-btn').addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+  }
+}
+
+window.MemoryMatch = MemoryMatch;

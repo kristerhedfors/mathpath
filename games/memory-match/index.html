@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Memory Match - Match hidden math problems with visible answers. Train your memory and math skills!">
+  <title>Memory Match | MathPath Games</title>
+
+  <!-- Common Styles -->
+  <link rel="stylesheet" href="../../shared/styles/common.css">
+  <!-- Game-specific Styles -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Shared utilities -->
+  <script src="../../shared/utils/storage.js"></script>
+  <script src="../../shared/utils/math.js"></script>
+  <script src="../../shared/utils/scoreboard.js"></script>
+  <script src="../../shared/utils/player-switcher.js"></script>
+  <script src="../../shared/utils/game-switcher.js"></script>
+
+  <!-- Game logic -->
+  <script src="game.js"></script>
+</head>
+<body>
+  <div id="game-container"></div>
+
+  <script>
+    // Initialize player check
+    function initGame() {
+      const player = PlayerStorage.getCurrentPlayer();
+
+      if (!player) {
+        // Redirect to main menu to set player name
+        window.location.href = '../../index.html';
+        return;
+      }
+
+      // Check for difficulty in URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const difficulty = urlParams.get('difficulty');
+
+      if (difficulty && ['easy', 'medium', 'hard'].includes(difficulty)) {
+        // Start game with selected difficulty
+        const game = new MemoryMatch(difficulty);
+        game.initialize();
+      } else {
+        // Show difficulty selection
+        showDifficultySelection();
+      }
+    }
+
+    function showDifficultySelection() {
+      const player = PlayerStorage.getCurrentPlayer();
+
+      document.getElementById('game-container').innerHTML = `
+        <div class="difficulty-screen">
+          <div class="difficulty-content">
+            <div class="game-header">
+              <h1 class="game-title">🧠 Memory Match</h1>
+              <div id="player-switcher-container"></div>
+            </div>
+
+            <div class="difficulty-card">
+              <h2>Welcome, ${player}!</h2>
+              <p class="subtitle">Match hidden problems with visible answers. Train your memory and math skills!</p>
+
+              <div class="difficulty-options">
+                <h3>Choose Your Challenge:</h3>
+
+                <button class="difficulty-btn easy" onclick="startGame('easy')">
+                  <div class="difficulty-icon">🟢</div>
+                  <div class="difficulty-name">Easy</div>
+                  <div class="difficulty-description">Addition & Subtraction (1-10)</div>
+                </button>
+
+                <button class="difficulty-btn medium" onclick="startGame('medium')">
+                  <div class="difficulty-icon">🟡</div>
+                  <div class="difficulty-name">Medium</div>
+                  <div class="difficulty-description">Mixed Operations (1-50)</div>
+                </button>
+
+                <button class="difficulty-btn hard" onclick="startGame('hard')">
+                  <div class="difficulty-icon">🔴</div>
+                  <div class="difficulty-name">Hard</div>
+                  <div class="difficulty-description">All Operations (1-100)</div>
+                </button>
+              </div>
+
+              <div class="game-info">
+                <h4>How to Play:</h4>
+                <ul>
+                  <li>Left grid: Click to flip and reveal math problems</li>
+                  <li>Right grid: Click the matching answer</li>
+                  <li>Match all 12 pairs before time runs out</li>
+                  <li>Fewer attempts = better score!</li>
+                </ul>
+              </div>
+
+              <div class="back-link">
+                <a href="../../index.html" class="btn btn-secondary">← Back to Menu</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      createPlayerSwitcher('#player-switcher-container', () => {
+        window.location.reload();
+      });
+
+      // Add game switcher
+      createGameSwitcher('#player-switcher-container', 'memory-match');
+    }
+
+    function startGame(difficulty) {
+      const game = new MemoryMatch(difficulty);
+      game.initialize();
+    }
+
+    // Make startGame globally accessible
+    window.startGame = startGame;
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', initGame);
+  </script>
+
+  <style>
+    /* Difficulty Selection Screen Styles */
+    .difficulty-screen {
+      padding: var(--space-6);
+      max-width: 800px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+    }
+
+    .difficulty-content {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+
+    .difficulty-card {
+      background: var(--color-surface);
+      padding: var(--space-8);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: var(--text-lg);
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-6);
+    }
+
+    .difficulty-options {
+      margin: var(--space-8) 0;
+    }
+
+    .difficulty-options h3 {
+      margin-bottom: var(--space-6);
+      color: var(--color-primary);
+    }
+
+    .difficulty-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      width: 100%;
+      padding: var(--space-6);
+      margin-bottom: var(--space-4);
+      background: var(--color-background);
+      border: 3px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .difficulty-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-primary);
+    }
+
+    .difficulty-btn:active {
+      transform: translateY(0);
+    }
+
+    .difficulty-btn.easy:hover {
+      border-color: #4caf50;
+    }
+
+    .difficulty-btn.medium:hover {
+      border-color: #ff9800;
+    }
+
+    .difficulty-btn.hard:hover {
+      border-color: #f44336;
+    }
+
+    .difficulty-icon {
+      font-size: 32px;
+      flex-shrink: 0;
+    }
+
+    .difficulty-name {
+      font-size: var(--text-xl);
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: var(--space-1);
+    }
+
+    .difficulty-description {
+      font-size: var(--text-sm);
+      color: var(--color-text-secondary);
+    }
+
+    .game-info {
+      margin-top: var(--space-6);
+      padding: var(--space-6);
+      background: var(--color-background);
+      border-radius: var(--radius-lg);
+      text-align: left;
+    }
+
+    .game-info h4 {
+      margin-top: 0;
+      margin-bottom: var(--space-3);
+      color: var(--color-primary);
+    }
+
+    .game-info ul {
+      margin: 0;
+      padding-left: var(--space-6);
+    }
+
+    .game-info li {
+      margin-bottom: var(--space-2);
+      line-height: 1.6;
+    }
+
+    .back-link {
+      margin-top: var(--space-6);
+    }
+
+    @media (max-width: 767px) {
+      .difficulty-screen {
+        padding: var(--space-4);
+      }
+
+      .difficulty-card {
+        padding: var(--space-6);
+      }
+
+      .difficulty-btn {
+        flex-direction: column;
+        text-align: center;
+        padding: var(--space-4);
+      }
+
+      .difficulty-icon {
+        font-size: 24px;
+      }
+
+      .difficulty-name {
+        font-size: var(--text-lg);
+      }
+    }
+  </style>
+</body>
+</html>
