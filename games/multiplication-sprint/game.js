@@ -353,21 +353,39 @@ class MultiplicationSprint {
     const answersHTML = this.questions.map(q => {
       const selectedChoice = this.answers.get(q.id);
       const isCorrect = selectedChoice === q.correctChoice;
-      const selectedAnswer = q.choices[selectedChoice];
-      const correctAnswer = q.choices[q.correctChoice];
 
       return `
-        <div class="answer-review ${isCorrect ? 'correct' : 'incorrect'}">
-          <div class="answer-number">#${q.id}</div>
-          <div class="answer-question">${q.text} = ${correctAnswer}</div>
-          <div class="answer-status">
-            ${isCorrect
-              ? '<span style="color: var(--color-success); font-weight: bold;">✓ Correct</span>'
-              : `<span style="color: var(--color-error); font-weight: bold;">✗ Wrong</span>
-                 <div style="font-size: var(--font-size-sm); margin-top: var(--space-2);">
-                   You answered: ${selectedAnswer}
-                 </div>`
-            }
+        <div class="answer-review-card ${isCorrect ? 'correct' : 'incorrect'}">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+            <div class="answer-number">#${q.id}</div>
+            <div class="answer-status">
+              ${isCorrect
+                ? '<span style="color: var(--color-success); font-weight: bold;">✓ Correct</span>'
+                : '<span style="color: var(--color-error); font-weight: bold;">✗ Wrong</span>'
+              }
+            </div>
+          </div>
+          <div class="answer-question" style="margin-bottom: var(--space-4);">${q.text} = ?</div>
+          <div class="review-choices">
+            ${q.choices.map((choice, index) => {
+              const isSelected = selectedChoice === index;
+              const isCorrectChoice = index === q.correctChoice;
+              let className = 'review-choice-btn';
+
+              if (isCorrectChoice) {
+                className += ' review-correct';
+              } else if (isSelected && !isCorrect) {
+                className += ' review-wrong';
+              }
+
+              return `
+                <div class="${className}">
+                  ${choice}
+                  ${isCorrectChoice ? '<span class="choice-indicator">✓ Correct</span>' : ''}
+                  ${isSelected && !isCorrect ? '<span class="choice-indicator">✗ Your answer</span>' : ''}
+                </div>
+              `;
+            }).join('')}
           </div>
         </div>
       `;
@@ -377,7 +395,7 @@ class MultiplicationSprint {
       <div class="container container-md">
         <div class="card">
           <h2 style="margin-bottom: var(--space-6); text-align: center;">📝 Answer Review</h2>
-          <div class="answers-list">
+          <div class="answers-grid">
             ${answersHTML}
           </div>
           <div style="text-align: center; margin-top: var(--space-8);">
