@@ -252,6 +252,35 @@ class MemoryMatch {
     });
   }
 
+  updateCardsDisplay() {
+    // Update problem cards
+    document.querySelectorAll('.problem-card').forEach(card => {
+      const questionId = card.dataset.id;
+      const isFlipped = this.flippedCards.has(questionId);
+      const isMatched = this.matchedPairs.has(questionId);
+      const isSelected = this.selectedProblem?.id === questionId;
+
+      // Update classes
+      card.classList.toggle('flipped', isFlipped || isMatched);
+      card.classList.toggle('matched', isMatched);
+      card.classList.toggle('selected', isSelected);
+    });
+
+    // Update answer cards
+    document.querySelectorAll('.answer-card').forEach(card => {
+      const answerId = card.dataset.id;
+      const questionId = card.dataset.questionId;
+      const isFlipped = this.flippedCards.has(answerId);
+      const isMatched = this.matchedPairs.has(questionId);
+      const isDisabled = !this.selectedProblem || isMatched;
+
+      // Update classes
+      card.classList.toggle('flipped', isFlipped || isMatched);
+      card.classList.toggle('matched', isMatched);
+      card.classList.toggle('disabled', isDisabled);
+    });
+  }
+
   handleProblemClick(questionId) {
     if (this.gameEnded) return;
     if (this.showingError) return;
@@ -272,7 +301,7 @@ class MemoryMatch {
       this.flippedCards.add(questionId);
     }
 
-    this.render();
+    this.updateCardsDisplay();
   }
 
   handleAnswerClick(questionId, answerId) {
@@ -284,6 +313,12 @@ class MemoryMatch {
     // Flip the answer card
     this.flippedCards.add(answerId);
     this.attempts++;
+
+    // Update attempts display
+    const attemptsElement = document.getElementById('attempts');
+    if (attemptsElement) {
+      attemptsElement.textContent = this.attempts;
+    }
 
     // Check if match
     if (this.selectedProblem.id === questionId) {
@@ -300,13 +335,19 @@ class MemoryMatch {
     this.correctMatches++;
     this.selectedProblem = null;
 
+    // Update stats display
+    const matchedElement = document.getElementById('matched');
+    if (matchedElement) {
+      matchedElement.textContent = `${this.correctMatches}/9`;
+    }
+
     // Check if won
     if (this.correctMatches === 9) {
       setTimeout(() => {
         this.endGame('complete');
       }, 500);
     } else {
-      this.render();
+      this.updateCardsDisplay();
     }
   }
 
@@ -315,18 +356,42 @@ class MemoryMatch {
     this.showingError = true;
     this.errorAnswerId = answerId;
 
-    // Re-render to show the error overlay with both cards visible
-    this.render();
+    // Update cards display to show both flipped
+    this.updateCardsDisplay();
 
-    // Update attempts in the display
-    const attemptsElement = document.getElementById('attempts');
-    if (attemptsElement) {
-      attemptsElement.textContent = this.attempts;
-    }
+    // Show error overlay
+    this.showErrorOverlay();
+  }
+
+  showErrorOverlay() {
+    // Create and show error overlay without full re-render
+    const existingOverlay = document.getElementById('error-overlay');
+    if (existingOverlay) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'error-overlay';
+    overlay.className = 'error-overlay';
+    overlay.innerHTML = `
+      <div class="error-message">
+        <div class="error-icon">✗</div>
+        <div class="error-text">Try Again</div>
+        <div class="error-hint">Click anywhere to continue</div>
+      </div>
+    `;
+    overlay.addEventListener('click', () => {
+      this.dismissError();
+    });
+    document.body.appendChild(overlay);
   }
 
   dismissError() {
     if (!this.showingError) return;
+
+    // Remove error overlay
+    const overlay = document.getElementById('error-overlay');
+    if (overlay) {
+      overlay.remove();
+    }
 
     // Clear error state
     const problemId = this.selectedProblem?.id;
@@ -344,8 +409,8 @@ class MemoryMatch {
       this.flippedCards.delete(answerId);
     }
 
-    // Re-render without error overlay
-    this.render();
+    // Update cards display
+    this.updateCardsDisplay();
   }
 
   endGame(reason) {
