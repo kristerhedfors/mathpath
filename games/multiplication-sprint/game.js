@@ -93,7 +93,7 @@ class MultiplicationSprint {
       this.updateTimer();
 
       if (this.timeRemaining <= 0) {
-        this.endGame();
+        this.endGame(true); // Pass true to indicate timeout
       }
     }, 1000);
   }
@@ -220,12 +220,18 @@ class MultiplicationSprint {
   /**
    * End the game and show results
    */
-  endGame() {
+  endGame(isTimeout = false) {
     if (this.gameEnded) return;
 
     this.gameEnded = true;
     this.endTime = Date.now();
     clearInterval(this.timerInterval);
+
+    // If timeout, show timeout banner instead of results
+    if (isTimeout) {
+      this.renderTimeoutBanner();
+      return;
+    }
 
     // Calculate results
     const totalTime = Math.floor((this.endTime - this.startTime) / 1000);
@@ -257,6 +263,70 @@ class MultiplicationSprint {
     }
 
     this.renderResults(correctCount, totalTime, accuracy, scoreSaved);
+  }
+
+  /**
+   * Render timeout banner with choices
+   */
+  renderTimeoutBanner() {
+    const container = document.getElementById('game-container');
+    const answeredCount = this.answers.size;
+
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'timeout-overlay';
+    overlay.innerHTML = `
+      <div class="timeout-banner animate-slideUp">
+        <div style="font-size: var(--font-size-4xl); margin-bottom: var(--space-4);">⏰</div>
+        <h2 style="font-size: var(--font-size-3xl); margin-bottom: var(--space-3); color: var(--color-primary);">
+          Time's Up!
+        </h2>
+        <p style="font-size: var(--font-size-lg); color: var(--color-text-secondary); margin-bottom: var(--space-6);">
+          You answered <strong>${answeredCount} of ${this.questions.length}</strong> questions
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-3); width: 100%;">
+          <button class="btn-primary btn-lg btn-full" onclick="game.viewTimeoutResults()">
+            View Results 📊
+          </button>
+          <button class="btn-secondary btn-lg btn-full" onclick="game.playAgain()">
+            Try Again 🔄
+          </button>
+          <button class="btn-outline btn-full" onclick="window.location.reload()">
+            Change Difficulty
+          </button>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(overlay);
+  }
+
+  /**
+   * View results after timeout
+   */
+  viewTimeoutResults() {
+    // Remove the timeout banner
+    const overlay = document.querySelector('.timeout-overlay');
+    if (overlay) {
+      overlay.remove();
+    }
+
+    // Calculate and show results
+    const totalTime = this.timeLimit; // Used full time
+    let correctCount = 0;
+
+    this.questions.forEach(q => {
+      const selectedChoice = this.answers.get(q.id);
+      if (selectedChoice === q.correctChoice) {
+        correctCount++;
+      }
+    });
+
+    const accuracy = MathUtils.calculatePercentage(correctCount, this.questions.length);
+
+    // Don't save score on timeout
+    this.renderResults(correctCount, totalTime, accuracy, false);
   }
 
   /**
