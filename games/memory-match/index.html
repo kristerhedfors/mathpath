@@ -57,7 +57,10 @@
           <div class="difficulty-content">
             <div class="game-header">
               <h1 class="game-title">🧠 Memory Match</h1>
-              <div id="player-switcher-container"></div>
+              <div class="header-controls">
+                <div id="game-switcher-container"></div>
+                <div id="player-switcher-container"></div>
+              </div>
             </div>
 
             <div class="difficulty-card">
@@ -104,12 +107,10 @@
         </div>
       `;
 
+      createGameSwitcher('#game-switcher-container', 'memory-match');
       createPlayerSwitcher('#player-switcher-container', () => {
         window.location.reload();
       });
-
-      // Add game switcher
-      createGameSwitcher('#player-switcher-container', 'memory-match');
     }
 
     function startGame(difficulty) {

@@ -20,7 +20,7 @@ class MemoryMatch {
     const questionSet = MathUtils.generateQuestionSet(12, this.difficulty);
     this.questions = questionSet.map((q, index) => ({
       id: `q-${index}`,
-      problem: q.question,
+      problem: q.text,
       answer: q.answer,
       choices: q.choices
     }));
@@ -47,7 +47,10 @@ class MemoryMatch {
         <div class="welcome-content">
           <div class="game-header">
             <h1 class="game-title">🧠 Memory Match</h1>
-            <div id="player-switcher-container"></div>
+            <div class="header-controls">
+              <div id="game-switcher-container"></div>
+              <div id="player-switcher-container"></div>
+            </div>
           </div>
 
           <div class="welcome-card">
@@ -73,6 +76,7 @@ class MemoryMatch {
       </div>
     `;
 
+    createGameSwitcher('#game-switcher-container', 'memory-match');
     createPlayerSwitcher('#player-switcher-container', () => {
       window.location.reload();
     });
@@ -115,7 +119,10 @@ class MemoryMatch {
         <div class="game-header">
           <div class="header-left">
             <h1 class="game-title">🧠 Memory Match</h1>
-            <div id="player-switcher-container"></div>
+            <div class="header-controls">
+              <div id="game-switcher-container"></div>
+              <div id="player-switcher-container"></div>
+            </div>
           </div>
           <div class="header-right">
             <div class="stat-item">
@@ -151,6 +158,7 @@ class MemoryMatch {
       </div>
     `;
 
+    createGameSwitcher('#game-switcher-container', 'memory-match');
     createPlayerSwitcher('#player-switcher-container', () => {
       window.location.reload();
     });
@@ -185,13 +193,14 @@ class MemoryMatch {
 
   renderAnswersGrid() {
     return this.answers.map(a => {
+      const isFlipped = this.flippedCards.has(a.id);
       const isMatched = this.matchedPairs.has(a.questionId);
       const isDisabled = !this.selectedProblem || isMatched;
 
       const classes = [
         'card',
         'answer-card',
-        'flipped',
+        isFlipped || isMatched ? 'flipped' : '',
         isMatched ? 'matched' : '',
         isDisabled ? 'disabled' : ''
       ].filter(Boolean).join(' ');
@@ -199,6 +208,7 @@ class MemoryMatch {
       return `
         <div class="${classes}" data-id="${a.id}" data-question-id="${a.questionId}" data-type="answer">
           <div class="card-inner">
+            <div class="card-back">?</div>
             <div class="card-front">${a.answer}</div>
           </div>
         </div>
@@ -250,6 +260,8 @@ class MemoryMatch {
     if (!this.selectedProblem) return;
     if (this.matchedPairs.has(questionId)) return;
 
+    // Flip the answer card
+    this.flippedCards.add(answerId);
     this.attempts++;
 
     // Check if match
@@ -258,7 +270,7 @@ class MemoryMatch {
       this.handleCorrectMatch(questionId);
     } else {
       // Incorrect match
-      this.handleIncorrectMatch();
+      this.handleIncorrectMatch(answerId);
     }
   }
 
@@ -277,7 +289,7 @@ class MemoryMatch {
     }
   }
 
-  handleIncorrectMatch() {
+  handleIncorrectMatch(answerId) {
     const wrongAnimation = document.createElement('div');
     wrongAnimation.className = 'feedback-animation wrong';
     wrongAnimation.textContent = '✗ Try Again';
@@ -287,12 +299,13 @@ class MemoryMatch {
       wrongAnimation.remove();
     }, 1000);
 
-    // Flip card back after delay
+    // Flip cards back after delay
     const problemId = this.selectedProblem.id;
     this.selectedProblem = null;
 
     setTimeout(() => {
       this.flippedCards.delete(problemId);
+      this.flippedCards.delete(answerId);
       this.render();
     }, 800);
 
@@ -400,7 +413,10 @@ class MemoryMatch {
         <div class="results-content">
           <div class="game-header">
             <h1 class="game-title">🧠 Memory Match</h1>
-            <div id="player-switcher-container"></div>
+            <div class="header-controls">
+              <div id="game-switcher-container"></div>
+              <div id="player-switcher-container"></div>
+            </div>
           </div>
 
           ${resultHTML}
@@ -425,6 +441,7 @@ class MemoryMatch {
       </div>
     `;
 
+    createGameSwitcher('#game-switcher-container', 'memory-match');
     createPlayerSwitcher('#player-switcher-container', () => {
       window.location.reload();
     });
