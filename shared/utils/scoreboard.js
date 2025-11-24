@@ -137,8 +137,8 @@ class Scoreboard {
     if (scores.length === 0) {
       container.innerHTML = `
         <p class="empty-message">
-          No perfect scores yet for ${playerName}!<br>
-          <span class="hint">Complete a round with 100% accuracy to appear on the leaderboard.</span>
+          No scores yet for ${playerName}!<br>
+          <span class="hint">Complete a round to appear on the leaderboard.</span>
         </p>
       `;
       return;
@@ -204,6 +204,7 @@ class Scoreboard {
       <tr>
         <th scope="col">Rank</th>
         <th scope="col">Player</th>
+        <th scope="col">Accuracy</th>
         <th scope="col">Time</th>
         <th scope="col">Date</th>
       </tr>
@@ -236,6 +237,12 @@ class Scoreboard {
         nameCell.innerHTML += ' <span class="you-badge">You</span>';
       }
       row.appendChild(nameCell);
+
+      // Accuracy
+      const accuracyCell = document.createElement('td');
+      accuracyCell.className = 'accuracy-cell';
+      accuracyCell.textContent = `${score.accuracy}%`;
+      row.appendChild(accuracyCell);
 
       // Time
       const timeCell = document.createElement('td');

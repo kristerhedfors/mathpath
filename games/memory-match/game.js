@@ -497,14 +497,15 @@ class MemoryMatch {
 
     // Save score if completed
     if (reason === 'complete') {
+      const accuracy = Math.round((9 / this.attempts) * 100);
       const score = {
-        player: PlayerStorage.getCurrentPlayer(),
+        playerName: PlayerStorage.getCurrentPlayer(),
         game: 'memory-match',
         difficulty: this.difficulty,
-        attempts: this.attempts,
-        timeUsed: timeUsed,
-        completed: true,
-        timestamp: Date.now()
+        time: timeUsed,
+        accuracy: accuracy,
+        correctAnswers: 9, // All pairs matched
+        totalQuestions: 9  // 9 pairs total
       };
 
       ScoreStorage.saveScore(score);

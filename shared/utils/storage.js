@@ -70,29 +70,24 @@ const PlayerStorage = {
  */
 const ScoreStorage = {
   /**
-   * Save a score (only if 100% accuracy)
+   * Save a score (accepts any accuracy percentage)
    * @param {Object} scoreData
    * @param {string} scoreData.playerName - Player name
    * @param {string} scoreData.game - Game name (multiplication-sprint, math-blitz, number-ninja)
    * @param {string} scoreData.difficulty - Difficulty (easy, normal, hard)
    * @param {number} scoreData.time - Time in seconds
-   * @param {number} scoreData.accuracy - Accuracy percentage (should be 100)
+   * @param {number} scoreData.accuracy - Accuracy percentage (0-100)
    * @param {number} scoreData.correctAnswers - Number of correct answers
-   * @param {number} scoreData.totalQuestions - Total questions (should be 20)
-   * @returns {boolean} True if saved, false if not (accuracy < 100)
+   * @param {number} scoreData.totalQuestions - Total questions
+   * @returns {boolean} True if saved, false if error
    */
   saveScore(scoreData) {
-    // Only save perfect scores
-    if (scoreData.accuracy !== 100 || scoreData.correctAnswers !== scoreData.totalQuestions) {
-      return false;
-    }
-
     const score = {
       playerName: scoreData.playerName,
       game: scoreData.game,
       difficulty: scoreData.difficulty,
       time: scoreData.time,
-      accuracy: 100,
+      accuracy: scoreData.accuracy,
       correctAnswers: scoreData.correctAnswers,
       totalQuestions: scoreData.totalQuestions,
       date: new Date().toISOString(),
@@ -133,7 +128,7 @@ const ScoreStorage = {
    * @param {string} filters.playerName - Filter by player name
    * @param {string} filters.game - Filter by game
    * @param {string} filters.difficulty - Filter by difficulty
-   * @returns {Array} Filtered and sorted scores (best times first)
+   * @returns {Array} Filtered and sorted scores (by accuracy desc, then time asc)
    */
   getScores(filters = {}) {
     let scores = this.getAllScores();
@@ -149,8 +144,13 @@ const ScoreStorage = {
       scores = scores.filter(s => s.difficulty === filters.difficulty);
     }
 
-    // Sort by time (fastest first)
-    scores.sort((a, b) => a.time - b.time);
+    // Sort by accuracy (highest first), then by time (fastest first)
+    scores.sort((a, b) => {
+      if (b.accuracy !== a.accuracy) {
+        return b.accuracy - a.accuracy; // Higher accuracy first
+      }
+      return a.time - b.time; // Faster time first
+    });
 
     return scores;
   },

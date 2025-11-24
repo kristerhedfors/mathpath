@@ -419,21 +419,17 @@ class NumberNinja {
     const answeredCount = this.answers.length;
     const accuracy = MathUtils.calculatePercentage(correctCount, this.questions.length);
 
-    // Save score if perfect
+    // Save score
     const playerName = PlayerStorage.getCurrentPlayer();
-    let scoreSaved = false;
-
-    if (accuracy === 100 && answeredCount === this.questions.length) {
-      scoreSaved = ScoreStorage.saveScore({
-        playerName,
-        game: 'number-ninja',
-        difficulty: this.difficulty,
-        time: totalTime,
-        accuracy,
-        correctAnswers: correctCount,
-        totalQuestions: this.questions.length
-      });
-    }
+    const scoreSaved = ScoreStorage.saveScore({
+      playerName,
+      game: 'number-ninja',
+      difficulty: this.difficulty,
+      time: totalTime,
+      accuracy,
+      correctAnswers: correctCount,
+      totalQuestions: this.questions.length
+    });
 
     this.renderResults(correctCount, answeredCount, totalTime, accuracy, scoreSaved);
   }

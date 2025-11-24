@@ -295,21 +295,17 @@ class MathBlitz {
     // Count fast answers
     const fastAnswers = this.answers.filter(a => a.correct && a.timeSpent < 3).length;
 
-    // Save score if perfect
+    // Save score
     const playerName = PlayerStorage.getCurrentPlayer();
-    let scoreSaved = false;
-
-    if (accuracy === 100 && answeredCount === this.questions.length) {
-      scoreSaved = ScoreStorage.saveScore({
-        playerName,
-        game: 'math-blitz',
-        difficulty: this.difficulty,
-        time: totalTime,
-        accuracy,
-        correctAnswers: correctCount,
-        totalQuestions: this.questions.length
-      });
-    }
+    const scoreSaved = ScoreStorage.saveScore({
+      playerName,
+      game: 'math-blitz',
+      difficulty: this.difficulty,
+      time: totalTime,
+      accuracy,
+      correctAnswers: correctCount,
+      totalQuestions: this.questions.length
+    });
 
     this.renderResults(correctCount, answeredCount, totalTime, accuracy, fastAnswers, scoreSaved);
   }
