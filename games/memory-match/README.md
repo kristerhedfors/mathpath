@@ -197,7 +197,7 @@ Potential additions based on user feedback:
 
 ## Credits
 
-Part of the MathPath Games suite - educational math games for elementary and middle school students.
+Part of the algebrain.dev suite - educational math games for elementary and middle school students.
 
 **Pedagogical Approach**: Based on research in cognitive load theory, spaced repetition, and active recall.
 

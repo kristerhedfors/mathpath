@@ -1,4 +1,4 @@
-# 🎮 MathPath Games
+# 🎮 algebrain.dev
 
 Three engaging multiplication games for kids aged 12-15, teaching multiplication (2×2 to 12×12), addition, and subtraction through different gameplay styles.
 
@@ -74,7 +74,7 @@ Three engaging multiplication games for kids aged 12-15, teaching multiplication
 ### For Developers
 ```bash
 # Clone or download the repository
-cd mathpath
+cd algebrain.dev
 
 # Start a local server (choose one):
 python3 -m http.server 8000
@@ -90,7 +90,7 @@ open http://localhost:8000
 ## 📁 Project Structure
 
 ```
-mathpath/
+algebrain.dev/
 ├── index.html                      # Main game selector/launcher
 ├── README.md                       # This file
 ├── CLAUDE.md                       # Project configuration
@@ -148,12 +148,12 @@ mathpath/
 
 **Current Player**
 ```
-mathpath_current_player: "PlayerName"
+algebrain_dev_current_player: "PlayerName"
 ```
 
 **All Scores**
 ```json
-mathpath_all_scores: [
+algebrain_dev_all_scores: [
   {
     "playerName": "Alex",
     "game": "multiplication-sprint",

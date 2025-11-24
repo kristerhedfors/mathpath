@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="MathPath Games - Fun multiplication, addition, and subtraction games for kids">
-  <title>MathPath Games - Choose Your Adventure</title>
+  <meta name="description" content="algebrain.dev - Fun multiplication, addition, and subtraction games for kids">
+  <title>algebrain.dev - Choose Your Adventure</title>
 
   <link rel="stylesheet" href="shared/styles/common.css">
 
@@ -350,7 +350,7 @@
   <!-- Player Setup Modal -->
   <div class="modal-overlay" id="player-modal">
     <div class="modal-content">
-      <h2>🎮 Welcome to MathPath Games!</h2>
+      <h2>🎮 Welcome to algebrain.dev!</h2>
       <p>Choose a nickname</p>
 
       <div class="player-input-group">
@@ -389,7 +389,7 @@
     </div>
 
     <div class="hero">
-      <h1>🎮 MathPath Games</h1>
+      <h1>🎮 algebrain.dev</h1>
       <p>Master multiplication, addition, and subtraction through fun gameplay!</p>
     </div>
 
@@ -510,7 +510,7 @@
           console.log('Setting player name:', name);
           const savedName = PlayerStorage.setCurrentPlayer(name);
           console.log('Player name saved:', savedName);
-          console.log('localStorage check:', localStorage.getItem('mathpath_current_player'));
+          console.log('localStorage check:', localStorage.getItem('algebrain_dev_current_player'));
           modal.classList.add('hidden');
           playerWelcome.style.display = 'flex';
           currentPlayerName.textContent = name;

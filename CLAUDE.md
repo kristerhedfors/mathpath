@@ -1,4 +1,4 @@
-# Claude Code Configuration - MathPath Games
+# Claude Code Configuration - algebrain.dev
 
 ## Project Overview
 Standalone math learning web games for kids in school using pure client-side technologies (HTML, JS, CSS). No frameworks, no build tools, no backwards compatibility.

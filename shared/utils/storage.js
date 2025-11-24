@@ -1,9 +1,9 @@
 /**
  * Storage utility for managing player data and scores in localStorage
- * Namespace format: mathpath_{playerName}_{game}_{difficulty}
+ * Namespace format: algebrain_dev_{playerName}_{game}_{difficulty}
  */
 
-const STORAGE_PREFIX = 'mathpath';
+const STORAGE_PREFIX = 'algebrain_dev';
 const CURRENT_PLAYER_KEY = `${STORAGE_PREFIX}_current_player`;
 const ALL_SCORES_KEY = `${STORAGE_PREFIX}_all_scores`;
 
