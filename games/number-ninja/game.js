@@ -470,7 +470,8 @@ class NumberNinja {
     container.innerHTML = `
       <div class="container container-md animate-slideUp">
         <div class="card text-center">
-          <div style="display: flex; justify-content: flex-end; margin-bottom: var(--space-4);">
+          <div style="display: flex; justify-content: flex-end; gap: var(--space-3); margin-bottom: var(--space-4);">
+            <div id="game-switcher-container"></div>
             <div id="player-switcher-container"></div>
           </div>
 
@@ -544,6 +545,9 @@ class NumberNinja {
       difficulty: this.difficulty
     });
     scoreboard.render();
+
+    // Add game switcher
+    createGameSwitcher('#game-switcher-container', 'Number Ninja');
 
     // Add player switcher
     createPlayerSwitcher('#player-switcher-container', () => {
