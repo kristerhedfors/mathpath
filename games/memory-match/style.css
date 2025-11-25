@@ -9,34 +9,10 @@
   margin: 0 auto;
 }
 
-@media (max-width: 767px) {
-  .memory-container {
-    grid-template-columns: 1fr !important;
-    gap: 8px !important;
-    padding: 4px !important;
-  }
-}
-
 .grid-section {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-}
-
-@media (max-width: 767px) {
-  .grid-section {
-    max-width: 100%;
-    width: 100%;
-    margin: 0 auto;
-  }
-}
-
-@media (max-width: 480px) {
-  .grid-section {
-    max-width: 100%;
-    width: 100%;
-    margin: 0 auto;
-  }
 }
 
 .grid-title {
@@ -58,63 +34,6 @@
   gap: var(--space-3);
   height: 100%;
   min-height: min(32vh, 280px);
-}
-
-@media (max-width: 767px) {
-  .card-grid {
-    gap: 2px !important;
-  }
-
-  .card {
-    width: 100% !important;
-    height: auto !important;
-  }
-
-  .card-inner {
-    width: 100% !important;
-    height: 100% !important;
-  }
-
-  .card-front,
-  .card-back {
-    width: 100% !important;
-    height: 100% !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .card-grid {
-    gap: 1px !important;
-  }
-
-  .card {
-    width: 100% !important;
-    height: auto !important;
-  }
-
-  .card-inner {
-    width: 100% !important;
-    height: 100% !important;
-  }
-
-  .card-front,
-  .card-back {
-    font-size: 14px !important;
-    width: 100% !important;
-    height: 100% !important;
-  }
-
-  .card-back {
-    font-size: 20px !important;
-  }
-
-  .card-question {
-    font-size: 10px !important;
-  }
-
-  .card-answer {
-    font-size: 16px !important;
-  }
 }
 
 .card {
@@ -167,28 +86,6 @@
   padding: var(--space-3);
   word-wrap: break-word;
   transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-@media (max-width: 767px) {
-  .card-front,
-  .card-back {
-    padding: 2px !important;
-    font-size: 16px !important;
-    border-radius: 4px !important;
-  }
-
-  .card-back {
-    font-size: 24px !important;
-  }
-
-  .card-question {
-    font-size: 11px !important;
-    margin-bottom: 2px !important;
-  }
-
-  .card-answer {
-    font-size: 18px !important;
-  }
 }
 
 .card-back {
@@ -653,9 +550,59 @@
 }
 
 @media (max-width: 767px) {
+  /* Layout */
+  .memory-container {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 4px;
+  }
+
+  .grid-section {
+    max-width: 100%;
+    width: 100%;
+  }
+
   .grid-title {
     font-size: var(--text-sm);
     padding: 4px;
+  }
+
+  /* Card Grid */
+  .card-grid {
+    gap: 2px;
+  }
+
+  .card {
+    width: 100%;
+    height: auto;
+  }
+
+  .card-inner {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Card Styling */
+  .card-front,
+  .card-back {
+    padding: 2px;
+    font-size: 16px;
+    border-radius: 4px;
+    width: 100%;
+    height: 100%;
+  }
+
+  .card-back {
+    font-size: 24px;
+  }
+
+  .card-question {
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+
+  .card-answer {
+    font-size: 18px;
   }
 
   .card.matched::after {
@@ -666,6 +613,7 @@
     right: 4px;
   }
 
+  /* Header */
   .game-header {
     flex-direction: column;
     padding: var(--space-3);
@@ -690,6 +638,7 @@
     font-size: var(--text-xs);
   }
 
+  /* Feedback */
   .feedback-animation {
     font-size: var(--text-lg);
     padding: var(--space-3);
@@ -712,6 +661,7 @@
     font-size: var(--text-xs);
   }
 
+  /* Results & Welcome Screens */
   .results-screen,
   .welcome-screen {
     padding: var(--space-3);
@@ -740,6 +690,29 @@
 }
 
 @media (max-width: 480px) {
+  /* Card Grid */
+  .card-grid {
+    gap: 1px;
+  }
+
+  /* Card Styling */
+  .card-front,
+  .card-back {
+    font-size: 14px;
+  }
+
+  .card-back {
+    font-size: 20px;
+  }
+
+  .card-question {
+    font-size: 10px;
+  }
+
+  .card-answer {
+    font-size: 16px;
+  }
+
   .card.matched::after {
     width: 16px;
     height: 16px;
@@ -748,11 +721,13 @@
     right: 3px;
   }
 
+  /* Layout */
   .grid-title {
     font-size: var(--text-xs);
     padding: var(--space-1);
   }
 
+  /* Feedback */
   .error-message {
     padding: var(--space-3);
     margin: var(--space-2);
