@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate PWA Icons - algebrain.dev</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 { color: #667eea; }
+    .icon-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .icon-item {
+      text-align: center;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .icon-item canvas {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .icon-item p {
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover { background: #5a6fd6; }
+    #download-all {
+      background: #10b981;
+      font-size: 18px;
+      padding: 12px 24px;
+    }
+    #download-all:hover { background: #0ea572; }
+    .instructions {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .instructions ol { padding-left: 20px; }
+  </style>
+</head>
+<body>
+  <h1>PWA Icon Generator</h1>
+
+  <div class="instructions">
+    <h2>Instructions</h2>
+    <ol>
+      <li>Click "Download All Icons" below to download all icons as individual files</li>
+      <li>Save each file to the <code>/icons/</code> folder</li>
+      <li>Icons are generated with the algebrain.dev branding</li>
+    </ol>
+    <button id="download-all">Download All Icons</button>
+  </div>
+
+  <div class="icon-preview" id="preview"></div>
+
+  <script>
+    const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+    const maskableSizes = [192, 512];
+
+    function drawIcon(ctx, size, isMaskable = false) {
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#667eea');
+      gradient.addColorStop(1, '#764ba2');
+
+      // Background
+      if (isMaskable) {
+        // Maskable icons need full square with safe zone
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+      } else {
+        ctx.fillStyle = gradient;
+        const radius = size * 0.1875; // 96/512
+        roundRect(ctx, 0, 0, size, size, radius);
+        ctx.fill();
+      }
+
+      // Brain + math symbol design
+      const scale = size / 512;
+      ctx.save();
+      ctx.translate(size / 2, size / 2);
+      ctx.scale(scale, scale);
+
+      ctx.strokeStyle = 'white';
+      ctx.fillStyle = 'white';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Left hemisphere
+      ctx.lineWidth = 16;
+      ctx.beginPath();
+      ctx.moveTo(-20, -80);
+      ctx.bezierCurveTo(-80, -80, -120, -40, -120, 20);
+      ctx.bezierCurveTo(-120, 60, -100, 90, -60, 100);
+      ctx.bezierCurveTo(-40, 105, -20, 100, -20, 100);
+      ctx.stroke();
+
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.moveTo(-60, -60);
+      ctx.bezierCurveTo(-90, -40, -100, 0, -90, 40);
+      ctx.stroke();
+
+      // Right hemisphere
+      ctx.lineWidth = 16;
+      ctx.beginPath();
+      ctx.moveTo(20, -80);
+      ctx.bezierCurveTo(80, -80, 120, -40, 120, 20);
+      ctx.bezierCurveTo(120, 60, 100, 90, 60, 100);
+      ctx.bezierCurveTo(40, 105, 20, 100, 20, 100);
+      ctx.stroke();
+
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.moveTo(60, -60);
+      ctx.bezierCurveTo(90, -40, 100, 0, 90, 40);
+      ctx.stroke();
+
+      // Center connection
+      ctx.beginPath();
+      ctx.moveTo(0, -80);
+      ctx.lineTo(0, 100);
+      ctx.stroke();
+
+      // Math symbols
+      ctx.font = 'bold 48px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.globalAlpha = 0.9;
+      ctx.fillText('+', -60, 10);
+      ctx.fillText('x', 60, 10);
+      ctx.globalAlpha = 1;
+
+      ctx.restore();
+    }
+
+    function roundRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+
+    function createIcon(size, isMaskable = false) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      drawIcon(ctx, size, isMaskable);
+      return canvas;
+    }
+
+    function downloadIcon(canvas, filename) {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // Generate previews
+    const preview = document.getElementById('preview');
+    const canvases = [];
+
+    sizes.forEach(size => {
+      const item = document.createElement('div');
+      item.className = 'icon-item';
+
+      const canvas = createIcon(size);
+      const displaySize = Math.min(size, 128);
+      canvas.style.width = displaySize + 'px';
+      canvas.style.height = displaySize + 'px';
+
+      item.appendChild(canvas);
+      item.innerHTML += `<p>icon-${size}.png</p>`;
+
+      const btn = document.createElement('button');
+      btn.textContent = 'Download';
+      btn.onclick = () => downloadIcon(canvas, `icon-${size}.png`);
+      item.appendChild(btn);
+
+      preview.appendChild(item);
+      canvases.push({ canvas, filename: `icon-${size}.png` });
+    });
+
+    // Maskable icons
+    maskableSizes.forEach(size => {
+      const item = document.createElement('div');
+      item.className = 'icon-item';
+
+      const canvas = createIcon(size, true);
+      const displaySize = Math.min(size, 128);
+      canvas.style.width = displaySize + 'px';
+      canvas.style.height = displaySize + 'px';
+
+      item.appendChild(canvas);
+      item.innerHTML += `<p>icon-maskable-${size}.png</p>`;
+
+      const btn = document.createElement('button');
+      btn.textContent = 'Download';
+      btn.onclick = () => downloadIcon(canvas, `icon-maskable-${size}.png`);
+      item.appendChild(btn);
+
+      preview.appendChild(item);
+      canvases.push({ canvas, filename: `icon-maskable-${size}.png` });
+    });
+
+    // Download all button
+    document.getElementById('download-all').onclick = async () => {
+      for (const { canvas, filename } of canvases) {
+        downloadIcon(canvas, filename);
+        await new Promise(r => setTimeout(r, 200)); // Small delay between downloads
+      }
+    };
+  </script>
+</body>
+</html>
