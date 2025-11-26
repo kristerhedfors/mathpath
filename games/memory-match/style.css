@@ -550,94 +550,31 @@
 }
 
 @media (max-width: 767px) {
-  /* Full height game screen */
-  .game-screen {
-    height: 100dvh;
-    height: 100vh; /* Fallback */
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  /* Layout */
+  .memory-container {
+    grid-template-columns: 1fr;
+    gap: 8px;
     padding: 4px;
   }
 
-  /* Header - compact on mobile */
-  .game-header {
-    flex-direction: column;
-    padding: var(--space-2);
-    gap: var(--space-1);
-    margin-bottom: var(--space-2);
-    flex-shrink: 0;
-  }
-
-  .header-left {
-    display: none; /* Hide title and switchers in game mode for more space */
-  }
-
-  .header-right {
-    width: 100%;
-    justify-content: space-around;
-    gap: var(--space-2);
-  }
-
-  .stat-item {
-    flex-direction: row;
-    gap: var(--space-1);
-  }
-
-  .stat-value {
-    font-size: var(--text-sm);
-  }
-
-  .stat-label {
-    font-size: var(--text-xs);
-  }
-
-  /* Memory container - flex to fill available space */
-  .memory-container {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 0;
-    flex: 1;
-    min-height: 0; /* Critical for flex shrinking */
-  }
-
-  /* Grid sections share available space equally */
   .grid-section {
-    flex: 1;
-    min-height: 0; /* Allow shrinking */
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    max-width: 100%;
+    width: 100%;
   }
 
   .grid-title {
-    font-size: 12px;
+    font-size: var(--text-sm);
     padding: 4px;
-    flex-shrink: 0;
-    margin: 0;
   }
 
-  /* Card Grid - fill available section space */
+  /* Card Grid */
   .card-grid {
-    flex: 1;
-    min-height: 0; /* Remove min-height, allow shrinking */
-    max-height: 100%;
-    gap: 4px;
-    /* Use auto rows that fill available space */
-    grid-template-rows: repeat(3, 1fr);
+    gap: 2px;
   }
 
-  /* Cards - size based on available grid cell */
   .card {
     width: 100%;
-    height: 100%;
-    aspect-ratio: auto; /* Remove aspect ratio on mobile to fit height */
-    min-height: 0;
-  }
-
-  .card:hover:not(.matched) {
-    transform: none; /* Disable hover scale on mobile */
+    height: auto;
   }
 
   .card-inner {
@@ -645,37 +582,60 @@
     height: 100%;
   }
 
-  /* Card faces fill the card */
+  /* Card Styling */
   .card-front,
   .card-back {
-    padding: 4px;
-    font-size: 14px;
-    border-radius: 6px;
+    padding: 2px;
+    font-size: 16px;
+    border-radius: 4px;
     width: 100%;
     height: 100%;
   }
 
   .card-back {
-    font-size: 20px;
+    font-size: 24px;
   }
 
   .card-question {
-    font-size: 10px;
-    margin-bottom: 1px;
-    line-height: 1.1;
+    font-size: 11px;
+    margin-bottom: 2px;
   }
 
   .card-answer {
-    font-size: 16px;
-    line-height: 1.2;
+    font-size: 18px;
   }
 
   .card.matched::after {
-    width: 16px;
-    height: 16px;
-    font-size: 10px;
-    top: 2px;
-    right: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 11px;
+    top: 4px;
+    right: 4px;
+  }
+
+  /* Header */
+  .game-header {
+    flex-direction: column;
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .header-left,
+  .header-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-right {
+    gap: var(--space-3);
+  }
+
+  .stat-value {
+    font-size: var(--text-base);
+  }
+
+  .stat-label {
+    font-size: var(--text-xs);
   }
 
   /* Feedback */
@@ -729,67 +689,52 @@
   }
 }
 
-/* Small phones (iPhone SE, etc.) */
 @media (max-width: 480px) {
-  .game-screen {
-    padding: 2px;
-  }
-
-  .game-header {
-    padding: var(--space-1);
-  }
-
-  .memory-container {
-    gap: 4px;
-  }
-
-  .grid-section {
-    gap: 2px;
-  }
-
-  .grid-title {
-    font-size: 11px;
-    padding: 2px 4px;
-  }
-
+  /* Card Grid */
   .card-grid {
-    gap: 3px;
+    gap: 1px;
   }
 
+  /* Card Styling */
   .card-front,
   .card-back {
-    font-size: 12px;
-    padding: 2px;
-    border-radius: 4px;
-  }
-
-  .card-back {
-    font-size: 16px;
-  }
-
-  .card-question {
-    font-size: 9px;
-  }
-
-  .card-answer {
     font-size: 14px;
   }
 
-  .card.matched::after {
-    width: 14px;
-    height: 14px;
-    font-size: 9px;
-    top: 1px;
-    right: 1px;
+  .card-back {
+    font-size: 20px;
   }
 
+  .card-question {
+    font-size: 10px;
+  }
+
+  .card-answer {
+    font-size: 16px;
+  }
+
+  .card.matched::after {
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    top: 3px;
+    right: 3px;
+  }
+
+  /* Layout */
+  .grid-title {
+    font-size: var(--text-xs);
+    padding: var(--space-1);
+  }
+
+  /* Feedback */
   .error-message {
     padding: var(--space-3);
     margin: var(--space-2);
   }
 
   .error-icon {
-    font-size: 32px;
+    font-size: 36px;
     margin-bottom: var(--space-2);
   }
 
@@ -799,60 +744,6 @@
   }
 
   .error-hint {
-    font-size: 10px;
-  }
-}
-
-/* Landscape mode on mobile - side by side layout */
-@media (max-width: 767px) and (orientation: landscape) {
-  .game-screen {
-    padding: 2px;
-  }
-
-  .game-header {
-    padding: 2px var(--space-2);
-    margin-bottom: 2px;
-  }
-
-  .memory-container {
-    flex-direction: row;
-    gap: 8px;
-  }
-
-  .grid-section {
-    flex: 1;
-  }
-
-  .grid-title {
-    font-size: 10px;
-    padding: 2px;
-  }
-
-  .card-grid {
-    gap: 2px;
-  }
-
-  .card-front,
-  .card-back {
     font-size: 11px;
-    padding: 2px;
-  }
-
-  .card-back {
-    font-size: 14px;
-  }
-
-  .card-question {
-    font-size: 8px;
-  }
-
-  .card-answer {
-    font-size: 12px;
-  }
-
-  .card.matched::after {
-    width: 12px;
-    height: 12px;
-    font-size: 8px;
   }
 }
